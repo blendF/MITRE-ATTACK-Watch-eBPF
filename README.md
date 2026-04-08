@@ -1,4 +1,6 @@
-# kwatch-ebpf
+# MITRE-ATTACK-Watch-eBPF (kwatch-ebpf)
+
+Monitors kernel-level process activity, emits detailed execution logs, and is intended to map observed behavior to relevant [MITRE ATT&CK](https://attack.mitre.org/) techniques for detection and analysis.
 
 > An experimentation project — built to experiment/learn eBPF, not for production use.
 

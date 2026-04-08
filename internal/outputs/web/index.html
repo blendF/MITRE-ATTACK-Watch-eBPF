@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>kwatch · MITRE ATT&amp;CK</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="hdr">
+    <h1>kwatch dashboard</h1>
+    <p class="sub">Live kernel events with heuristic MITRE ATT&amp;CK mapping</p>
+  </header>
+  <div class="legend">
+    <span class="pill sev-low">low</span>
+    <span class="pill sev-medium">medium</span>
+    <span class="pill sev-critical">critical</span>
+  </div>
+  <div class="table-wrap">
+    <table id="events">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Severity</th>
+          <th>Type</th>
+          <th>Command</th>
+          <th>MITRE</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

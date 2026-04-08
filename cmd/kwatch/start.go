@@ -6,12 +6,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/spf13/cobra"
 	"github.com/ismajl-ramadani/kwatch-ebpf/internal/config"
+	"github.com/ismajl-ramadani/kwatch-ebpf/internal/mitre"
 	"github.com/ismajl-ramadani/kwatch-ebpf/internal/models"
 	"github.com/ismajl-ramadani/kwatch-ebpf/internal/outputs"
 	"github.com/ismajl-ramadani/kwatch-ebpf/internal/snapshot"
 	"github.com/ismajl-ramadani/kwatch-ebpf/internal/tracer"
+	"github.com/spf13/cobra"
 )
 
 var configPath string
@@ -20,6 +21,13 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start the eBPF agent and stream events",
 	Run: func(cmd *cobra.Command, args []string) {
+		attackDB, err := mitre.LoadEmbedded()
+		if err != nil {
+			log.Fatalf("Failed to load MITRE technique metadata: %v", err)
+		}
+		mapper := mitre.NewMapper(attackDB)
+		eventStore := mitre.NewStore(8192)
+
 		mux := outputs.NewMultiplexer()
 		mux.Add(outputs.NewStdoutOutput())
 
@@ -33,7 +41,7 @@ var startCmd = &cobra.Command{
 				mux.Add(outputs.NewPrometheusOutput(cfg.Outputs.Prometheus))
 			}
 			if cfg.Outputs.Websocket != nil && cfg.Outputs.Websocket.Enabled {
-				mux.Add(outputs.NewWebsocketOutput(cfg.Outputs.Websocket))
+				mux.Add(outputs.NewDashboardOutput(cfg.Outputs.Websocket, eventStore))
 			}
 			if cfg.Outputs.MQTT != nil && cfg.Outputs.MQTT.Enabled {
 				mux.Add(outputs.NewMqttOutput(cfg.Outputs.MQTT))
@@ -65,7 +73,9 @@ var startCmd = &cobra.Command{
 
 		go func() {
 			for ev := range eventChan {
-				mux.SendEvent(ev)
+				enriched := mapper.Enrich(ev)
+				eventStore.Add(enriched)
+				mux.SendEvent(enriched)
 			}
 		}()
 

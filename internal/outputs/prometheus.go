@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/ismajl-ramadani/kwatch-ebpf/internal/config"
-	"github.com/ismajl-ramadani/kwatch-ebpf/internal/models"
+	"github.com/ismajl-ramadani/kwatch-ebpf/internal/mitre"
 	"github.com/ismajl-ramadani/kwatch-ebpf/internal/snapshot"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -56,8 +56,11 @@ func (p *PrometheusOutput) SendSnapshot(_ *snapshot.SnapshotJSON) error {
 	return nil
 }
 
-func (p *PrometheusOutput) SendEvent(ev models.EventJSON) error {
-	p.events.WithLabelValues(ev.Type, ev.Command).Inc()
+func (p *PrometheusOutput) SendEvent(ev *mitre.EnrichedEvent) error {
+	if ev == nil {
+		return nil
+	}
+	p.events.WithLabelValues(ev.Event.Type, ev.Event.Command).Inc()
 	return nil
 }
 

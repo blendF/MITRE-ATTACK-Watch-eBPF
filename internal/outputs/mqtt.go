@@ -6,7 +6,7 @@ import (
 
 	"github.com/eclipse/paho.mqtt.golang"
 	"github.com/ismajl-ramadani/kwatch-ebpf/internal/config"
-	"github.com/ismajl-ramadani/kwatch-ebpf/internal/models"
+	"github.com/ismajl-ramadani/kwatch-ebpf/internal/mitre"
 	"github.com/ismajl-ramadani/kwatch-ebpf/internal/snapshot"
 )
 
@@ -50,7 +50,10 @@ func (m *MqttOutput) SendSnapshot(snap *snapshot.SnapshotJSON) error {
 	return token.Error()
 }
 
-func (m *MqttOutput) SendEvent(ev models.EventJSON) error {
+func (m *MqttOutput) SendEvent(ev *mitre.EnrichedEvent) error {
+	if ev == nil {
+		return nil
+	}
 	data, err := json.Marshal(ev)
 	if err != nil {
 		return err

@@ -22,6 +22,26 @@ Process events are enriched from `/proc/[pid]/` (exe, cwd, ppid, memory, fd coun
 
 - **Kernel:** C + eBPF, compiled via [cilium/ebpf](https://github.com/cilium/ebpf) / bpf2go
 - **Backend:** Go
+- **ATT&CK metadata:** slim JSON embedded from [MITRE ATT&CK STIX data](https://github.com/mitre-attack/attack-stix-data) (`enterprise-attack.json`), regenerated via `tools/extract-techniques`
+
+## MITRE ATT&CK mapping (heuristic)
+
+Each kernel event is enriched with possible **MITRE ATT&CK** techniques using **rules** (event type, paths, ports, command-line hints). This is an **experimental aid** for analysts, not validated detection logic. MITRE does not endorse this mapping.
+
+- **Severity** is derived from those rules: **low** (e.g. generic exec), **medium** (e.g. network, sensitive file reads), **critical** (e.g. credential-critical paths, suspicious ports).
+- **Stdout, MQTT, and the dashboard** receive the same enriched JSON shape: `id`, `observed_at`, `severity`, `event` (raw fields), `matches[]` (technique id, name, URL, rationale, rule severity), `data_source` (tracepoint summary).
+
+### Regenerate embedded techniques
+
+After updating the `attack-stix-data` copy, rebuild the bundled file (from the repo root):
+
+```bash
+go run ./tools/extract-techniques \
+  -in ./attack-stix-data/enterprise-attack/enterprise-attack.json \
+  -out ./internal/mitre/techniques_embed.json
+```
+
+Commit the updated `internal/mitre/techniques_embed.json`.
 
 ## Run
 
@@ -60,7 +80,7 @@ outputs:
     topic: "kwatch/events"
 ```
 
-All outputs are optional. Omit any section you don't need. Stdout is always active.
+All outputs are optional. Omit any section you don't need. Stdout is always active and prints **enriched** JSON (raw event plus MITRE fields).
 
 ### Prometheus
 
@@ -71,9 +91,18 @@ kwatch_events_total{type="exec", command="bash"} 47
 kwatch_events_total{type="open", command="nginx"} 312
 ```
 
-### Websocket
+### Web dashboard (YAML key `websocket`)
 
-Serves a websocket at `/ws`. On connect, clients receive the full process snapshot, then a continuous stream of flat JSON events.
+When `outputs.websocket.enabled` is true, the agent serves:
+
+| URL | Purpose |
+|-----|---------|
+| `http://<host>:<port>/` | Live table of events; **blue** = low, **yellow** = medium, **red** = critical |
+| `http://<host>:<port>/log/{id}` | Detail page for one stored event (how it matched ATT&CK) |
+| `http://<host>:<port>/api/events/{id}` | Same payload as JSON |
+| `ws://<host>:<port>/ws` | WebSocket: initial process snapshot, then enriched events |
+
+Recent events are kept in memory (ring buffer, default 8192) so `/log/{id}` links stay valid until the event ages out.
 
 ### MQTT
 

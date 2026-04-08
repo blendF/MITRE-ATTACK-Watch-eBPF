@@ -4,16 +4,17 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/ismajl-ramadani/kwatch-ebpf/internal/mitre"
 	"github.com/ismajl-ramadani/kwatch-ebpf/internal/models"
 	"github.com/ismajl-ramadani/kwatch-ebpf/internal/snapshot"
 )
 
 type mockOutput struct {
-	mu             sync.Mutex
-	initCalled     bool
-	closeCalled    bool
-	snapshotCount  int
-	eventCount     int
+	mu            sync.Mutex
+	initCalled    bool
+	closeCalled   bool
+	snapshotCount int
+	eventCount    int
 }
 
 func (m *mockOutput) Init() error {
@@ -30,7 +31,7 @@ func (m *mockOutput) SendSnapshot(_ *snapshot.SnapshotJSON) error {
 	return nil
 }
 
-func (m *mockOutput) SendEvent(_ models.EventJSON) error {
+func (m *mockOutput) SendEvent(_ *mitre.EnrichedEvent) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.eventCount++
@@ -66,7 +67,11 @@ func TestMultiplexerBroadcast(t *testing.T) {
 	}
 
 	for i := 0; i < 10; i++ {
-		mux.SendEvent(models.EventJSON{Type: "exec", PID: uint32(i)})
+		mux.SendEvent(&mitre.EnrichedEvent{
+			ID:       "t",
+			Severity: mitre.SeverityLow,
+			Event:    models.EventJSON{Type: "exec", PID: uint32(i)},
+		})
 	}
 
 	if a.eventCount != 10 || b.eventCount != 10 {
@@ -88,6 +93,6 @@ func TestMultiplexerEmpty(t *testing.T) {
 	}
 
 	mux.SendSnapshot(&snapshot.SnapshotJSON{Type: "snapshot"})
-	mux.SendEvent(models.EventJSON{Type: "exec"})
+	mux.SendEvent(&mitre.EnrichedEvent{Event: models.EventJSON{Type: "exec"}})
 	mux.CloseAll()
 }

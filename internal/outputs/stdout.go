@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ismajl-ramadani/kwatch-ebpf/internal/models"
+	"github.com/ismajl-ramadani/kwatch-ebpf/internal/mitre"
 	"github.com/ismajl-ramadani/kwatch-ebpf/internal/snapshot"
 )
 
@@ -27,7 +27,10 @@ func (s *StdoutOutput) SendSnapshot(snap *snapshot.SnapshotJSON) error {
 	return nil
 }
 
-func (s *StdoutOutput) SendEvent(ev models.EventJSON) error {
+func (s *StdoutOutput) SendEvent(ev *mitre.EnrichedEvent) error {
+	if ev == nil {
+		return nil
+	}
 	data, err := json.Marshal(ev)
 	if err != nil {
 		return err

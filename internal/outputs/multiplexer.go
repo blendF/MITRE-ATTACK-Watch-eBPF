@@ -3,7 +3,7 @@ package outputs
 import (
 	"log"
 
-	"github.com/ismajl-ramadani/kwatch-ebpf/internal/models"
+	"github.com/ismajl-ramadani/kwatch-ebpf/internal/mitre"
 	"github.com/ismajl-ramadani/kwatch-ebpf/internal/snapshot"
 )
 
@@ -36,7 +36,10 @@ func (m *Multiplexer) SendSnapshot(snap *snapshot.SnapshotJSON) {
 	}
 }
 
-func (m *Multiplexer) SendEvent(ev models.EventJSON) {
+func (m *Multiplexer) SendEvent(ev *mitre.EnrichedEvent) {
+	if ev == nil {
+		return
+	}
 	for _, o := range m.outputs {
 		if err := o.SendEvent(ev); err != nil {
 			log.Printf("output error (event): %v", err)

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Event {{.ID}}</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <article class="detail">
+    <a class="back" href="/">← Dashboard</a>
+    <h1>Event <span class="mono">{{.ID}}</span></h1>
+    <p>
+      <strong>Observed:</strong> {{.ObservedAt}}<br />
+      <strong>Aggregated severity:</strong>
+      <span class="pill sev-{{.Severity}}">{{.Severity}}</span>
+    </p>
+
+    <h2>How this maps to MITRE ATT&amp;CK</h2>
+    <p class="note">
+      Rules correlate kernel telemetry (tracepoints) to possible techniques. This is a <strong>heuristic</strong> aid, not ground-truth detection.
+    </p>
+    <p><strong>Data source:</strong> {{.DataSource}}</p>
+    {{if .UnmappedMsg}}<p class="note">{{.UnmappedMsg}}</p>{{end}}
+
+    <h2>Raw event (JSON)</h2>
+    <pre>{{.EventJSON}}</pre>
+
+    <h2>Technique matches</h2>
+    {{if .Matches}}
+    {{range .Matches}}
+    <div class="match">
+      <h3><a href="{{.URL}}" rel="noopener noreferrer">{{.TechniqueID}} — {{.Name}}</a></h3>
+      <p class="rationale">{{.Rationale}}</p>
+      <p class="mono">Rule severity: <span class="sev-{{.Severity}}">{{.Severity}}</span></p>
+      {{if .Description}}<p class="rationale">{{.Description}}</p>{{end}}
+    </div>
+    {{end}}
+    {{else}}
+    <p class="note">No technique rules matched this event.</p>
+    {{end}}
+
+    <p class="disclaimer">
+      Technique names and descriptions are derived from MITRE ATT&amp;CK™ STIX data. MITRE does not endorse this tool.
+    </p>
+  </article>
+</body>
+</html>

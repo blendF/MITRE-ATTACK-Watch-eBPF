@@ -1,4 +1,4 @@
-# MITRE-ATTACK-Watch-eBPF (kwatch-ebpf)
+# MITRE-ATTACK-Watch-eBPF
 
 ## What is this?
 
